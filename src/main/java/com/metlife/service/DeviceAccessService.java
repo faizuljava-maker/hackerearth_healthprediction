@@ -92,8 +92,8 @@ System.out.println("token:"+tokenResponse.getAccessToken());
 		AggregateRequest request = new AggregateRequest()
 				.setAggregateBy(List.of(new AggregateBy().setDataTypeName("com.google.step_count.delta")
 						.setDataSourceId("derived:com.google.step_count.delta:com.google.android.gms:estimated_steps"),
-						new AggregateBy().setDataTypeName("com.google.heart_rate.bpm")
-						.setDataSourceId("raw:com.google.heart_rate.bpm:com.fitbit.android:fitbit")))
+						new AggregateBy().setDataTypeName("com.google.heart_minutes")
+						.setDataSourceId("derived:com.google.heart_minutes:com.google.android.gms:merge_heart_minutes")))
 				.setBucketByTime(new BucketByTime().setDurationMillis((long) 86400000)) // daily
 				.setStartTimeMillis(startMillis).setEndTimeMillis(endMillis);
 //		AggregateRequest request = new AggregateRequest()
@@ -120,15 +120,16 @@ System.out.println("token:"+tokenResponse.getAccessToken());
 			        String type = dataset.getDataSourceId();
 
 			        for (DataPoint point : dataset.getPoint()) {
-						String deviceId = point.getOriginDataSourceId();
-						String device = deviceId.split(":").length >= 4 ? deviceId.split(":")[3] : "unknown";
 						DeviceData deviceData = new DeviceData();
-						deviceData.setDevice(device);
 			            if (type.contains("step_count")) {
+							String deviceId = point.getOriginDataSourceId();
+							String device = deviceId.split(":").length >= 4 ? deviceId.split(":")[3] : "unknown";
+							deviceData.setDevice(device);
+
 			                int steps = point.getValue().get(0).getIntVal();
 			                System.out.println(date + " - Steps: " + steps);
 			                deviceData.setStepsCount(steps);
-			            } else if (type.contains("heart_rate")) {
+			            } else if (type.contains("heart_minutes")) {
 			                Double bpm = point.getValue().get(0).getFpVal();
 			                System.out.println(date + " - Heart Rate: " + bpm);
 			                deviceData.setHeartRate(bpm);
