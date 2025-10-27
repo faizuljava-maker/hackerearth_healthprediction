@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.metlife.controller;
+package com.hackerrank.controller;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -31,9 +31,9 @@ import com.google.api.services.fitness.model.AggregateBy;
 import com.google.api.services.fitness.model.DataPoint;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.metlife.model.DeviceValues;
-import com.metlife.model.StepCountDTO;
-import com.metlife.service.DeviceAccessService;
+import com.hackerrank.model.DeviceValues;
+import com.hackerrank.model.StepCountDTO;
+import com.hackerrank.service.DeviceAccessService;
 
 import jakarta.servlet.http.HttpServletResponse;
 

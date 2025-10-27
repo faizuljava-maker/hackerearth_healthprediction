@@ -1,4 +1,4 @@
-package com.metlife.enums;
+package com.hackerrank.enums;
 
 public enum ExerciseFrequency {
     NONE,

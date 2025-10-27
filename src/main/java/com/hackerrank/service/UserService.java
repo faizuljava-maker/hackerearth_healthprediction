@@ -1,4 +1,4 @@
-package com.metlife.service;
+package com.hackerrank.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service;
 
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
-import com.metlife.enums.AlcoholStatus;
-import com.metlife.enums.DietType;
-import com.metlife.enums.ExerciseFrequency;
-import com.metlife.enums.SmokingStatus;
-import com.metlife.enums.StressLevel;
-import com.metlife.model.User;
+import com.hackerrank.enums.AlcoholStatus;
+import com.hackerrank.enums.DietType;
+import com.hackerrank.enums.ExerciseFrequency;
+import com.hackerrank.enums.SmokingStatus;
+import com.hackerrank.enums.StressLevel;
+import com.hackerrank.model.User;
 
 @Service
 public class UserService {

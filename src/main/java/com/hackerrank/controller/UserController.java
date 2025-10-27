@@ -1,13 +1,14 @@
 /**
  * 
  */
-package com.metlife.controller;
+package com.hackerrank.controller;
 
-import com.metlife.model.User;
-import com.metlife.model.UserValidationResponse;
-import com.metlife.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.hackerrank.model.User;
+import com.hackerrank.model.UserValidationResponse;
+import com.hackerrank.service.UserService;
 
 import java.util.List;
 import java.util.Map;

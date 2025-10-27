@@ -1,4 +1,4 @@
-package com.metlife;
+package com.hackerrank;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

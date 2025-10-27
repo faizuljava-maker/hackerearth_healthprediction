@@ -1,4 +1,4 @@
-package com.metlife.model;
+package com.hackerrank.model;
 
 import java.util.List;
 

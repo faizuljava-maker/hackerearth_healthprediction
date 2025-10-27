@@ -1,4 +1,4 @@
-package com.metlife.model;
+package com.hackerrank.model;
 
 import java.time.LocalDate;
 import java.util.List;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.metlife.dao;
+package com.hackerrank.dao;
 
 /**
  * 

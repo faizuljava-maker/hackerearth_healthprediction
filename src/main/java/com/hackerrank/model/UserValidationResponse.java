@@ -1,4 +1,4 @@
-package com.metlife.model;
+package com.hackerrank.model;
 
 public class UserValidationResponse {
     private boolean valid;

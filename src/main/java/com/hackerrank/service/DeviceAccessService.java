@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.metlife.service;
+package com.hackerrank.service;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -34,8 +34,8 @@ import com.google.api.services.fitness.model.Dataset;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.metlife.model.DeviceData;
-import com.metlife.model.StepCountDTO;
+import com.hackerrank.model.DeviceData;
+import com.hackerrank.model.StepCountDTO;
 
 /**
  * 
