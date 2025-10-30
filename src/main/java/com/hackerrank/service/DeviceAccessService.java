@@ -49,7 +49,8 @@ public class DeviceAccessService {
 
 	public String getAuthUrl() {
 		GoogleAuthorizationCodeRequestUrl url = new GoogleAuthorizationCodeRequestUrl(CLIENT_ID, REDIRECT_URI,
-				List.of("https://www.googleapis.com/auth/fitness.activity.read","https://www.googleapis.com/auth/fitness.heart_rate.read"));
+				List.of("https://www.googleapis.com/auth/fitness.activity.read",
+						"https://www.googleapis.com/auth/fitness.heart_rate.read"));
 		return url.build();
 	}
 
@@ -61,7 +62,7 @@ public class DeviceAccessService {
 		AccessToken accessToken = new AccessToken(tokenResponse.getAccessToken(),
 				new Date(System.currentTimeMillis() + tokenResponse.getExpiresInSeconds() * 1000));
 
-System.out.println("token:"+tokenResponse.getAccessToken());
+		System.out.println("token:" + tokenResponse.getAccessToken());
 		return GoogleCredentials.create(accessToken);
 	}
 
@@ -90,10 +91,9 @@ System.out.println("token:"+tokenResponse.getAccessToken());
 				.setApplicationName("SpringFitApp").build();
 
 		AggregateRequest request = new AggregateRequest()
-				.setAggregateBy(List.of(new AggregateBy().setDataTypeName("com.google.step_count.delta")
-						.setDataSourceId("derived:com.google.step_count.delta:com.google.android.gms:estimated_steps"),
-						new AggregateBy().setDataTypeName("com.google.heart_minutes")
-						.setDataSourceId("derived:com.google.heart_minutes:com.google.android.gms:merge_heart_minutes")))
+				.setAggregateBy(List.of(new AggregateBy().setDataTypeName("com.google.step_count.delta"),
+						new AggregateBy().setDataTypeName("com.google.sleep.segment"),
+						new AggregateBy().setDataTypeName("com.google.heart_minutes")))
 				.setBucketByTime(new BucketByTime().setDurationMillis((long) 86400000)) // daily
 				.setStartTimeMillis(startMillis).setEndTimeMillis(endMillis);
 //		AggregateRequest request = new AggregateRequest()
@@ -116,28 +116,35 @@ System.out.println("token:"+tokenResponse.getAccessToken());
 //	            .sum();
 			Map<String, Integer> deviceMap = new HashMap<>();
 			List<DeviceData> devicedata = new ArrayList<>();
-			 for (Dataset dataset : bucket.getDataset()) {
-			        String type = dataset.getDataSourceId();
+			DeviceData deviceData = new DeviceData();
+			for (Dataset dataset : bucket.getDataset()) {
+				String type = dataset.getDataSourceId();
+				for (DataPoint point : dataset.getPoint()) {
+					if (type.contains("step_count")) {
+						String deviceId = point.getOriginDataSourceId();
+						String device = deviceId.split(":").length >= 4
+								? deviceId.split(":")[2].toUpperCase() + ":" + deviceId.split(":")[3]
+								: "unknown";
+						deviceData.setDevice(device);
 
-			        for (DataPoint point : dataset.getPoint()) {
-						DeviceData deviceData = new DeviceData();
-			            if (type.contains("step_count")) {
-							String deviceId = point.getOriginDataSourceId();
-							String device = deviceId.split(":").length >= 4 ? deviceId.split(":")[3] : "unknown";
-							deviceData.setDevice(device);
+						Integer steps = point.getValue().get(0).getIntVal();
+						System.out.println(date + " - Steps: " + steps);
+						deviceData.setStepsCount(steps);
+					} else if (type.contains("heart_minutes")) {
+						Double bpm = point.getValue().get(0).getFpVal();
+						System.out.println(date + " - Heart Rate: " + bpm);
+						deviceData.setHeartRate(bpm);
 
-			                int steps = point.getValue().get(0).getIntVal();
-			                System.out.println(date + " - Steps: " + steps);
-			                deviceData.setStepsCount(steps);
-			            } else if (type.contains("heart_minutes")) {
-			                Double bpm = point.getValue().get(0).getFpVal();
-			                System.out.println(date + " - Heart Rate: " + bpm);
-			                deviceData.setHeartRate(bpm);
-			            }
-			            devicedata.add(deviceData);
-			        }
-			    }
-			 
+					} else if (type.contains("sleep")) {
+						Integer sleep = point.getValue().get(0).getIntVal();
+						System.out.println(date + " - Sleep: " + sleep);
+						deviceData.setSleepHours(sleep);
+					}
+
+				}
+			}
+			devicedata.add(deviceData);
+
 //			bucket.getDataset().stream().flatMap(ds -> ds.getPoint().stream()).map(dpp -> {
 //				String deviceId = dpp.getOriginDataSourceId();
 //				int stepscount = dpp.getValue().get(0).getIntVal();

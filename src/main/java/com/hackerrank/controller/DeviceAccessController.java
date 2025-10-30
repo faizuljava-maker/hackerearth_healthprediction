@@ -27,6 +27,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.fitness.FitnessScopes;
 import com.google.api.services.fitness.model.AggregateBy;
 import com.google.api.services.fitness.model.DataPoint;
 import com.google.auth.oauth2.AccessToken;
@@ -50,8 +51,8 @@ public class DeviceAccessController {
 	public void authorize(HttpServletResponse response) throws IOException {
 		String redirectUri = "http://localhost:8080/oauth2callback";
 		String clientId = "1019297408529-dlpjingshj2bcbu08o5s9nl92hqjjee3.apps.googleusercontent.com";
-		String scope = "https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.heart_rate.read";
-
+		String scope = "https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.heart_rate.read "+FitnessScopes.FITNESS_SLEEP_READ;
+		
 		String authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" + "client_id=" + clientId + "&redirect_uri="
 				+ redirectUri + "&response_type=code" + "&scope=" + URLEncoder.encode(scope, "UTF-8")
 				+ "&access_type=offline";
@@ -59,7 +60,7 @@ public class DeviceAccessController {
 		response.sendRedirect(authUrl);
 	}
 
-	@GetMapping("/oauth2callback")
+	//@GetMapping("/oauth2callback")
 	public ResponseEntity<DeviceValues> oauthCallback(@RequestParam("code") String code) throws IOException {
 		System.out.println("inside oauth2callback");
 		String tokenUrl = "https://oauth2.googleapis.com/token";
@@ -138,7 +139,7 @@ public class DeviceAccessController {
 	}
 
 	// Approach 3
-	// @GetMapping("/oauth2callback")
+	 @GetMapping("/oauth2callback")
 	public ResponseEntity<List<StepCountDTO>> getLastWeekSteps(@RequestParam String code) throws IOException {
 		GoogleCredentials credentials = service.exchangeCode(code);
 
