@@ -87,8 +87,11 @@ public class UserService {
 
 	public String getLLMResponse(User user) {
 
-		Client client = Client.builder().apiKey("AIzaSyDnADA5aZpl0dnsw-ovuv8zNUG_ieo2I6M").build();
-		   String gender=user.getGender();
+		//Client client = Client.builder().apiKey("AIzaSyDnADA5aZpl0dnsw-ovuv8zNUG_ieo2I6M").build();
+		
+		Client client = Client.builder().apiKey("sk-TE5BPNfSh4IOCNpW3I5EDQ").build();
+		
+		String gender=user.getGender();
 		    LocalDate today = LocalDate.now();
 		    int age=Period.between(user.getDateOfBirth(), today).getYears();
 		    BigDecimal height=user.getHeightCm();

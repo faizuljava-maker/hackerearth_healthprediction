@@ -144,19 +144,19 @@ public class DeviceAccessController {
 		GoogleCredentials credentials = service.exchangeCode(code);
 
 		long endTimeMillis = System.currentTimeMillis();
-//	        long startTimeMillis = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000); // 7 days ago
-		// long startTimeMillis = getStartOfDayMillis(); //only for Today
-//	        long startTimeMillis = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7);
+	        long startTimeMillis = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000); // 7 days ago
+		 //long startTimeMillis = getStartOfDayMillis(); //only for Today
+	     //   long startTimeMillis = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7);
 
-		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
-		calendar.set(Calendar.HOUR_OF_DAY, 0);
-		calendar.set(Calendar.MINUTE, 0);
-		calendar.set(Calendar.SECOND, 0);
-		calendar.set(Calendar.MILLISECOND, 0);
+//		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
+//		calendar.set(Calendar.HOUR_OF_DAY, 0);
+//		calendar.set(Calendar.MINUTE, 0);
+//		calendar.set(Calendar.SECOND, 0);
+//		calendar.set(Calendar.MILLISECOND, 0);
 
 		// Set to Monday of current week
-		calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-		long startTimeMillis = calendar.getTimeInMillis();
+//		calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+//		long startTimeMillis = calendar.getTimeInMillis();
 
 		List<StepCountDTO> dailySteps = service.getDailyStepCounts(credentials, startTimeMillis, endTimeMillis);
 		return ResponseEntity.ok(dailySteps);
