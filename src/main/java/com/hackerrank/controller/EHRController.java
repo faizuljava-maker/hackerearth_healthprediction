@@ -5,7 +5,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -33,14 +36,18 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import com.hackerrank.model.HealthData;
+import com.hackerrank.model.HealthPrediction;
 import com.hackerrank.model.PatientBasicDetails;
 import com.hackerrank.model.PatientCondition;
 import com.hackerrank.model.PatientObservation;
+import com.hackerrank.model.PredictionResponse;
 import com.hackerrank.util.EHRUtil;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.StringClientParam;
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentResponse;
 
 @RestController
 public class EHRController {
@@ -77,7 +84,7 @@ public class EHRController {
 		String name = patient.getNameFirstRep().getGivenAsSingleString();
 		String gender = patient.getGender().toCode();
 		String birthDate = new SimpleDateFormat("yyyy-MM-dd").format(patient.getBirthDate());
-		PatientBasicDetails basicDetails = new PatientBasicDetails(name,gender,birthDate,null,null,null);
+		PatientBasicDetails basicDetails = new PatientBasicDetails(name,gender,birthDate,null,null,null,null);
 	//	patient.getAddress().get(0).getCity();
 		return basicDetails;
 	}
@@ -177,7 +184,198 @@ public class EHRController {
             conditions.add(new PatientCondition(condition.getCode().getCoding().get(0).getDisplay(),
             		condition.getClinicalStatus().getCoding().get(0).getDisplay()));
         }
-		PatientBasicDetails basicDetails = new PatientBasicDetails(name,gender,birthDate,mobileNo,observations,conditions);
+		PatientBasicDetails basicDetails = new PatientBasicDetails(name,gender,birthDate,mobileNo,observations,conditions,null);
 		return basicDetails;
 	}
+	
+	@PostMapping("/healthPrediction")
+	public HealthPrediction healthPrediction(@RequestBody PatientBasicDetails patientDetails) throws Exception {
+		List<String> bpmValues = new ArrayList<>();
+		
+		for (HealthPrediction prediction : patientDetails.getPredictionList()) {
+		    if (prediction.getHealthDataList() != null) {
+		        for (HealthData data : prediction.getHealthDataList()) {
+		            if (data.getBpm() != null) {
+		                bpmValues.add(data.getBpm().toString());
+		            }
+		        }
+		        
+		    }
+		    
+		}
+        String bpmValuesCommaSeparated = String.join(", ", bpmValues);
+        // Build and return the full prompt
+        String prompt =  String.format(
+        		"A user has the following historical blood pressure (BPM) values: %s. " +
+        		        "Based on these values, predict the user's overall blood pressure risk category. " +
+        		        "Respond with only one word: Low, Moderate, High, or Critical.",
+            bpmValuesCommaSeparated);
+        System.out.println("Generated prompt :" + prompt);
+
+        Client client = Client.builder().apiKey("AIzaSyDnADA5aZpl0dnsw-ovuv8zNUG_ieo2I6M").build();
+        GenerateContentResponse response = null;
+
+        try {
+            response = client.models.generateContent("gemini-2.5-flash", prompt, null);
+        } catch (Exception ex) {
+            response = null;
+        }
+        System.out.println("AI generated response :" + response);
+        String riskStatus = "Low";
+
+        try {
+            if (response != null && response.text() != null) {
+                String text = response.text().trim().toLowerCase();
+                System.out.println("Final response :" + text);
+
+                if (text.contains("low")) {
+                    riskStatus = "Low";
+                } else if (text.contains("moderate")) {
+                    riskStatus = "Moderate";
+                } else if (text.contains("high") && !text.contains("very")) {
+                    riskStatus = "High";
+                } else if (text.contains("critical") || text.contains("very high")) {
+                    riskStatus = "Critical";
+                }
+            }
+        } catch (Exception e) {
+            riskStatus = "Low";
+        }
+
+        PredictionResponse predictionResponse = new PredictionResponse();
+        predictionResponse.setBpm(riskStatus);
+
+        predictionResponse.setHasDiabetes(null);
+        predictionResponse.setHasHypertention(null);
+        predictionResponse.setOxygenSaturation(null);
+        predictionResponse.setBpMinValue(null);
+        predictionResponse.setBpMaxValue(null);
+        predictionResponse.setGlucose(null);
+        predictionResponse.setCholesterol(null);
+        predictionResponse.setTemperature(null);
+        predictionResponse.setWeight(null);
+        predictionResponse.setHeight(null);
+
+        HealthPrediction result = new HealthPrediction();
+        result.setPredictionResponse(predictionResponse);
+        result.setHealthDataList(null);
+
+        return result;
+	}
+
+	@PostMapping("/healthPrediction/v2")
+    public HealthPrediction healthPredictionV2(@RequestBody PatientBasicDetails patientDetails) {
+        Map<String, String> fieldPrompts = new LinkedHashMap<>() {{
+            put("bpm",
+                "A user has the following historical heart rate (BPM) values: %s. " + 
+                "Based on these values, predict the user's overall heart rate risk category. " + 
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("oxygenSaturation",
+                "A user has the following historical oxygen saturation values: %s. " +
+                "Based on these values, predict the user's overall oxygen saturation risk category. " +
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("bpMinValue",
+                "A user has the following historical blood pressure minimum values (diastolic): %s. " +
+                "Based on these values, predict the user's diastolic blood pressure risk category. " +
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("bpMaxValue",
+                "A user has the following historical blood pressure maximum values (systolic): %s. " +
+                "Based on these values, predict the user's systolic blood pressure risk category. " +
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("glucose",
+                "A user has the following historical blood glucose values: %s. " +
+                "Based on these values, predict the user's blood glucose risk category. " +
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("cholesterol",
+                "A user has the following historical cholesterol values: %s. " +
+                "Based on these values, predict the user's cholesterol risk category. " +
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("temperature",
+                "A user has the following historical body temperature values: %s. " +
+                "Based on these values, predict the user's temperature risk category. " +
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("weight",
+                "A user has the following historical weight values: %s. " +
+                "Based on these values, predict the user's weight risk category. " +
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("height",
+                "A user has the following historical height values: %s. " +
+                "Based on these values, predict the user's height risk category. " +
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+        }};
+        System.out.println("Generated prompt :" + fieldPrompts);
+
+        Map<String, List<String>> fieldValues = new HashMap<>();
+        for (String key : fieldPrompts.keySet())
+            fieldValues.put(key, new ArrayList<>());
+        System.out.println("Prompt feilds:" + fieldValues);
+
+        for (HealthPrediction prediction : patientDetails.getPredictionList()) {
+            if (prediction.getHealthDataList() != null) {
+                for (HealthData data : prediction.getHealthDataList()) {
+                    if (data.getBpm() != null) fieldValues.get("bpm").add(data.getBpm().toString());
+                    if (data.getOxygenSaturation() != null) fieldValues.get("oxygenSaturation").add(data.getOxygenSaturation().toString());
+                    if (data.getBpMinValue() != null) fieldValues.get("bpMinValue").add(data.getBpMinValue().toString());
+                    if (data.getBpMaxValue() != null) fieldValues.get("bpMaxValue").add(data.getBpMaxValue().toString());
+                    if (data.getGlucose() != null) fieldValues.get("glucose").add(data.getGlucose().toString());
+                    if (data.getCholesterol() != null) fieldValues.get("cholesterol").add(data.getCholesterol().toString());
+                    if (data.getTemperature() != null) fieldValues.get("temperature").add(data.getTemperature().toString());
+                    if (data.getWeight() != null) fieldValues.get("weight").add(data.getWeight().toString());
+                    if (data.getHeight() != null) fieldValues.get("height").add(data.getHeight().toString());
+                }
+            }
+        }
+        
+        Client client = Client.builder().apiKey("sk-TE5BPNfSh4IOCNpW3I5EDQ").build();
+
+        PredictionResponse predictionResponse = new PredictionResponse();
+
+        for (Map.Entry<String, String> entry : fieldPrompts.entrySet()) {
+            String field = entry.getKey();
+            List<String> values = fieldValues.get(field);
+            String status = null;
+            if (values != null && !values.isEmpty()) {
+                String splitedValues = String.join(", ", values);
+                String prompt = String.format(entry.getValue(), splitedValues);
+                status = getAIPrediction(client, prompt);
+            }
+            System.out.println("AI generated variable status:" + status);
+
+            switch (field) {
+                case "bpm": predictionResponse.setBpm(status); break;
+                case "oxygenSaturation": predictionResponse.setOxygenSaturation(status); break;
+                case "bpMinValue": predictionResponse.setBpMinValue(status); break;
+                case "bpMaxValue": predictionResponse.setBpMaxValue(status); break;
+                case "glucose": predictionResponse.setGlucose(status); break;
+                case "cholesterol": predictionResponse.setCholesterol(status); break;
+                case "temperature": predictionResponse.setTemperature(status); break;
+                case "weight": predictionResponse.setWeight(status); break;
+                case "height": predictionResponse.setHeight(status); break;
+            }
+        }
+        HealthPrediction result = new HealthPrediction();
+        result.setPredictionResponse(predictionResponse);
+        result.setHealthDataList(null);
+        return result;
+    }
+
+
+    private String getAIPrediction(Client client, String prompt) {
+        String defaultStatus = "Low";
+        try {
+            GenerateContentResponse response = client.models.generateContent("gemini-2.5-flash", prompt, null);
+            if (response != null && response.text() != null) {
+                String text = response.text().trim().toLowerCase();
+                if (text.contains("low")) return "Low";
+                else if (text.contains("moderate")) return "Moderate";
+                else if (text.contains("high") && !text.contains("very")) return "High";
+                else if (text.contains("critical") || text.contains("very high")) return "Critical";
+            }
+            System.out.println("Final AI generated response:" + response);
+
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+        return defaultStatus;
+    }
 }

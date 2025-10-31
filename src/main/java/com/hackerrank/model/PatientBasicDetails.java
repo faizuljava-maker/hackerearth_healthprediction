@@ -13,9 +13,10 @@ public class PatientBasicDetails {
 	private List<HealthData> healthDataList;
 	private List<PatientObservation> observationList;
 	private List<PatientCondition> conditionList;
+	private List<HealthPrediction> predictionList;
 
 	public PatientBasicDetails(String name, String gender, String dateOfBirth, String mobileNo,
-			List<PatientObservation> observationList, List<PatientCondition> conditionList) {
+			List<PatientObservation> observationList, List<PatientCondition> conditionList, List<HealthPrediction> predictionList) {
 		super();
 		this.name = name;
 		this.gender = gender;
@@ -23,6 +24,7 @@ public class PatientBasicDetails {
 		this.mobileNo = mobileNo;
 		this.observationList = observationList;
 		this.conditionList = conditionList;
+		this.predictionList = predictionList;
 	}
 	
 	public String getName() {
@@ -81,6 +83,14 @@ public class PatientBasicDetails {
 	}
 	public void setFirstName(String firstName) {
 		this.firstName = firstName;
+	}
+
+	public List<HealthPrediction> getPredictionList() {
+		return predictionList;
+	}
+
+	public void setPredictionList(List<HealthPrediction> predictionList) {
+		this.predictionList = predictionList;
 	}
 	
 }
