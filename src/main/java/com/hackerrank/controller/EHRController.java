@@ -245,8 +245,8 @@ public class EHRController {
         PredictionResponse predictionResponse = new PredictionResponse();
         predictionResponse.setBpm(riskStatus);
 
-        predictionResponse.setHasDiabetes(null);
-        predictionResponse.setHasHypertention(null);
+        predictionResponse.setDiabetes(null);
+        predictionResponse.setHypertention(null);
         predictionResponse.setOxygenSaturation(null);
         predictionResponse.setBpMinValue(null);
         predictionResponse.setBpMaxValue(null);
@@ -268,6 +268,14 @@ public class EHRController {
         Map<String, String> fieldPrompts = new LinkedHashMap<>() {{
             put("bpm",
                 "A user has the following historical heart rate (BPM) values: %s. " + 
+                "Based on these values, predict the user's overall heart rate risk category. " + 
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("diabetes",
+                "A user has the following historical diabetes values: %s. " + 
+                "Based on these values, predict the user's overall heart rate risk category. " + 
+                "Respond with only one word: Low, Moderate, High, or Critical.");
+            put("hypertension",
+                "A user has the following historical hypertension values: %s. " + 
                 "Based on these values, predict the user's overall heart rate risk category. " + 
                 "Respond with only one word: Low, Moderate, High, or Critical.");
             put("oxygenSaturation",
@@ -314,6 +322,8 @@ public class EHRController {
             if (prediction.getHealthDataList() != null) {
                 for (HealthData data : prediction.getHealthDataList()) {
                     if (data.getBpm() != null) fieldValues.get("bpm").add(data.getBpm().toString());
+                    if (data.getHasDiabetes() != null) fieldValues.get("diabetes").add(data.getHasDiabetes().toString());
+                    if (data.getHasHypertention() != null) fieldValues.get("hypertension").add(data.getHasHypertention().toString());
                     if (data.getOxygenSaturation() != null) fieldValues.get("oxygenSaturation").add(data.getOxygenSaturation().toString());
                     if (data.getBpMinValue() != null) fieldValues.get("bpMinValue").add(data.getBpMinValue().toString());
                     if (data.getBpMaxValue() != null) fieldValues.get("bpMaxValue").add(data.getBpMaxValue().toString());
@@ -326,7 +336,7 @@ public class EHRController {
             }
         }
         
-        Client client = Client.builder().apiKey("sk-TE5BPNfSh4IOCNpW3I5EDQ").build();
+        Client client = Client.builder().apiKey("AIzaSyDnADA5aZpl0dnsw-ovuv8zNUG_ieo2I6M").build();
 
         PredictionResponse predictionResponse = new PredictionResponse();
 
@@ -343,6 +353,8 @@ public class EHRController {
 
             switch (field) {
                 case "bpm": predictionResponse.setBpm(status); break;
+                case "diabetes": predictionResponse.setDiabetes(status); break;
+                case "hypertension": predictionResponse.setHypertention(status); break;
                 case "oxygenSaturation": predictionResponse.setOxygenSaturation(status); break;
                 case "bpMinValue": predictionResponse.setBpMinValue(status); break;
                 case "bpMaxValue": predictionResponse.setBpMaxValue(status); break;

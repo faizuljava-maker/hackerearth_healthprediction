@@ -2,8 +2,8 @@ package com.hackerrank.model;
 
 public class PredictionResponse {
 	private String bpm;
-    private String hasDiabetes;
-    private String hasHypertention;
+	private String diabetes;
+	private String hypertention;
     private String oxygenSaturation;
     private String bpMinValue;
     private String bpMaxValue;
@@ -18,17 +18,17 @@ public class PredictionResponse {
 	public void setBpm(String bpm) {
 		this.bpm = bpm;
 	}
-	public String getHasDiabetes() {
-		return hasDiabetes;
+	public String getDiabetes() {
+		return diabetes;
 	}
-	public void setHasDiabetes(String hasDiabetes) {
-		this.hasDiabetes = hasDiabetes;
+	public void setDiabetes(String diabetes) {
+		this.diabetes = diabetes;
 	}
-	public String getHasHypertention() {
-		return hasHypertention;
+	public String getHypertention() {
+		return hypertention;
 	}
-	public void setHasHypertention(String hasHypertention) {
-		this.hasHypertention = hasHypertention;
+	public void setHypertention(String hypertention) {
+		this.hypertention = hypertention;
 	}
 	public String getOxygenSaturation() {
 		return oxygenSaturation;
