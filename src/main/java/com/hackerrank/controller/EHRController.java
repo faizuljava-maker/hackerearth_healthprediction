@@ -37,6 +37,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.hackerrank.model.HealthData;
 import com.hackerrank.model.HealthPrediction;
+import com.hackerrank.model.MetricSuggestion;
 import com.hackerrank.model.PatientBasicDetails;
 import com.hackerrank.model.PatientCondition;
 import com.hackerrank.model.PatientObservation;
@@ -187,81 +188,6 @@ public class EHRController {
 		PatientBasicDetails basicDetails = new PatientBasicDetails(name,gender,birthDate,mobileNo,observations,conditions,null);
 		return basicDetails;
 	}
-	
-	@PostMapping("/healthPrediction")
-	public HealthPrediction healthPrediction(@RequestBody PatientBasicDetails patientDetails) throws Exception {
-		List<String> bpmValues = new ArrayList<>();
-		
-		for (HealthPrediction prediction : patientDetails.getPredictionList()) {
-		    if (prediction.getHealthDataList() != null) {
-		        for (HealthData data : prediction.getHealthDataList()) {
-		            if (data.getBpm() != null) {
-		                bpmValues.add(data.getBpm().toString());
-		            }
-		        }
-		        
-		    }
-		    
-		}
-        String bpmValuesCommaSeparated = String.join(", ", bpmValues);
-        // Build and return the full prompt
-        String prompt =  String.format(
-        		"A user has the following historical blood pressure (BPM) values: %s. " +
-        		        "Based on these values, predict the user's overall blood pressure risk category. " +
-        		        "Respond with only one word: Low, Moderate, High, or Critical.",
-            bpmValuesCommaSeparated);
-        System.out.println("Generated prompt :" + prompt);
-
-        Client client = Client.builder().apiKey("AIzaSyDnADA5aZpl0dnsw-ovuv8zNUG_ieo2I6M").build();
-        GenerateContentResponse response = null;
-
-        try {
-            response = client.models.generateContent("gemini-2.5-flash", prompt, null);
-        } catch (Exception ex) {
-            response = null;
-        }
-        System.out.println("AI generated response :" + response);
-        String riskStatus = "Low";
-
-        try {
-            if (response != null && response.text() != null) {
-                String text = response.text().trim().toLowerCase();
-                System.out.println("Final response :" + text);
-
-                if (text.contains("low")) {
-                    riskStatus = "Low";
-                } else if (text.contains("moderate")) {
-                    riskStatus = "Moderate";
-                } else if (text.contains("high") && !text.contains("very")) {
-                    riskStatus = "High";
-                } else if (text.contains("critical") || text.contains("very high")) {
-                    riskStatus = "Critical";
-                }
-            }
-        } catch (Exception e) {
-            riskStatus = "Low";
-        }
-
-        PredictionResponse predictionResponse = new PredictionResponse();
-        predictionResponse.setBpm(riskStatus);
-
-        predictionResponse.setDiabetes(null);
-        predictionResponse.setHypertention(null);
-        predictionResponse.setOxygenSaturation(null);
-        predictionResponse.setBpMinValue(null);
-        predictionResponse.setBpMaxValue(null);
-        predictionResponse.setGlucose(null);
-        predictionResponse.setCholesterol(null);
-        predictionResponse.setTemperature(null);
-        predictionResponse.setWeight(null);
-        predictionResponse.setHeight(null);
-
-        HealthPrediction result = new HealthPrediction();
-        result.setPredictionResponse(predictionResponse);
-        result.setHealthDataList(null);
-
-        return result;
-	}
 
 	@PostMapping("/healthPrediction/v2")
     public HealthPrediction healthPredictionV2(@RequestBody PatientBasicDetails patientDetails) {
@@ -332,7 +258,7 @@ public class EHRController {
                     if (data.getTemperature() != null) fieldValues.get("temperature").add(data.getTemperature().toString());
                     if (data.getWeight() != null) fieldValues.get("weight").add(data.getWeight().toString());
                     if (data.getHeight() != null) fieldValues.get("height").add(data.getHeight().toString());
-                }
+                } 
             }
         }
         
@@ -389,5 +315,84 @@ public class EHRController {
         	e.printStackTrace();
         }
         return defaultStatus;
+    }
+    
+    
+    @GetMapping("/healthSuggestions/v1")
+    public List<MetricSuggestion> getHealthSuggestionsV1() {
+
+        Map<String, String> statusMap = new LinkedHashMap<>();
+        statusMap.put("BPM", "Low");
+        statusMap.put("Diabetes", "Yes");
+        statusMap.put("Hypertension", "Yes");
+        statusMap.put("Oxygen Saturation", "Low");
+        statusMap.put("BP", "High");
+        statusMap.put("Glucose", "High");
+        statusMap.put("Cholesterol", "High");
+        statusMap.put("Temperature", "High");
+        statusMap.put("Weight", "High");
+        statusMap.put("Height", "Normal");
+
+        Map<String, String> staticSuggestions = Map.ofEntries(
+        	    Map.entry("BPM", "Keep your heart rate in a healthy range with regular activity and hydration."),
+        	    Map.entry("Diabetes", "Follow your diabetes management plan and monitor blood sugar consistently."),
+        	    Map.entry("Hypertension", "Maintain a low-sodium diet, manage stress, and check blood pressure regularly."),
+        	    Map.entry("Oxygen Saturation", "Practice breathing exercises and seek care if you notice sudden changes."),
+        	    Map.entry("BP", "Support healthy blood pressure with exercise, diet, and hydration."),
+        	    Map.entry("Glucose", "Balance your meals with fiber and monitor your blood sugar as recommended."),
+        	    Map.entry("Cholesterol", "Eat a heart-healthy diet, emphasizing fruits, vegetables, and limiting unhealthy fats."),
+        	    Map.entry("Temperature", "Monitor for abnormal temperatures and rest, stay hydrated, and consult a provider if concerned."),
+        	    Map.entry("Weight", "Maintain a healthy weight with balanced nutrition and regular physical activity."),
+        	    Map.entry("Height", "Continue good lifestyle habits appropriate for your age and growth stage.")
+        	);
+
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("Below are a user's health metric statuses (Low/High/Yes/No/Normal). For each metric, provide only a one-line actionable precaution or improvement suggestion (not a diagnosis or reference):\n\n");
+        int order = 1;
+        for (Map.Entry<String, String> entry : statusMap.entrySet()) {
+            promptBuilder.append(order++).append(". ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        }
+        promptBuilder.append("\nReturn your answer as a numbered list, matching the order above. Each line should be a short, actionable suggestion only.");
+
+        String prompt = promptBuilder.toString();
+
+        String aiRawResponse = "";
+        try {
+            Client client = Client.builder().apiKey("AIzaSyDnADA5aZpl0dnsw-ovuv8zNUG_ieo2I6M").build();
+            GenerateContentResponse response = client.models.generateContent("gemini-2.5-flash", prompt, null);
+            if (response != null && response.text() != null) {
+                aiRawResponse = response.text().trim();
+            }
+        } catch (Exception ex) {
+            List<MetricSuggestion> errorFallback = new ArrayList<>();
+            for (Map.Entry<String, String> entry : statusMap.entrySet()) {
+                String key = entry.getKey() + ":" + entry.getValue();
+                String staticAdvice = staticSuggestions.getOrDefault(key, "Please consult your physician.");
+                errorFallback.add(new MetricSuggestion(entry.getKey(), entry.getValue(), staticAdvice));
+            }
+            return errorFallback;
+        }
+
+        List<String> cleanLines = new ArrayList<>();
+        String[] aiLines = aiRawResponse.split("\n");
+        for (String line : aiLines) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.toLowerCase().contains("actionable")) continue;
+            trimmed = trimmed.replaceAll("^\\s*[\\d\\-\\.]+\\s*", "");
+            cleanLines.add(trimmed);
+        }
+
+        List<MetricSuggestion> results = new ArrayList<>();
+        int i = 0;
+        for (Map.Entry<String, String> entry : statusMap.entrySet()) {
+            String key = entry.getKey() + ":" + entry.getValue();
+            String aiSuggest = (i < cleanLines.size() && !cleanLines.get(i).isBlank()) ? cleanLines.get(i) : null;
+            if (aiSuggest == null || aiSuggest.isBlank()) {
+                aiSuggest = staticSuggestions.getOrDefault(key, "Please consult your physician.");
+            }
+            results.add(new MetricSuggestion(entry.getKey(), entry.getValue(), aiSuggest));
+            i++;
+        }
+        return results;
     }
 }
