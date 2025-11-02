@@ -318,8 +318,8 @@ public class EHRController {
     }
     
     
-    @GetMapping("/healthSuggestions/v1")
-    public List<MetricSuggestion> getHealthSuggestionsV1() {
+    @GetMapping("/healthSuggestions")
+    public List<MetricSuggestion> getHealthSuggestions() {
 
         Map<String, String> statusMap = new LinkedHashMap<>();
         statusMap.put("BPM", "Low");
